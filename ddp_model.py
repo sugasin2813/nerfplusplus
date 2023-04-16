@@ -5,6 +5,7 @@ import torch.nn as nn
 from utils import TINY_NUMBER, HUGE_NUMBER
 from collections import OrderedDict
 from nerf_network import Embedder, MLPNet
+from gridencoder import GridEncoder
 import os
 import logging
 logger = logging.getLogger(__package__)
@@ -47,25 +48,39 @@ def depth2pts_outside(ray_o, ray_d, depth):
 
 class NerfNet(nn.Module):
     def __init__(self, args):
+        if(args.embedder == 'positional'):
+            embedder = Embedder
+        elif(args.embedder == 'hashgrid'):
+            embedder = GridEncoder
+
         super().__init__()
         # foreground
-        self.fg_embedder_position = Embedder(input_dim=3,
+        """
+        self.fg_embedder_position = embedder(input_dim=3,
                                              max_freq_log2=args.max_freq_log2 - 1,
                                              N_freqs=args.max_freq_log2)
-        self.fg_embedder_viewdir = Embedder(input_dim=3,
+        self.fg_embedder_viewdir = embedder(input_dim=3,
                                             max_freq_log2=args.max_freq_log2_viewdirs - 1,
                                             N_freqs=args.max_freq_log2_viewdirs)
+        """
+        self.fg_embedder_position = GridEncoder(input_dim=3)
+        self.fg_embedder_viewdir = GridEncoder(input_dim=3)
         self.fg_net = MLPNet(D=args.netdepth, W=args.netwidth,
                              input_ch=self.fg_embedder_position.out_dim,
                              input_ch_viewdirs=self.fg_embedder_viewdir.out_dim,
                              use_viewdirs=args.use_viewdirs)
         # background; bg_pt is (x, y, z, 1/r)
-        self.bg_embedder_position = Embedder(input_dim=4,
+        """
+        self.bg_embedder_position = embedder(input_dim=4,
                                              max_freq_log2=args.max_freq_log2 - 1,
                                              N_freqs=args.max_freq_log2)
-        self.bg_embedder_viewdir = Embedder(input_dim=3,
+        self.bg_embedder_viewdir = embedder(input_dim=3,
                                             max_freq_log2=args.max_freq_log2_viewdirs - 1,
                                             N_freqs=args.max_freq_log2_viewdirs)
+        """
+        self.bg_embedder_position = GridEncoder(input_dim=4)
+        self.bg_embedder_viewdir = GridEncoder(input_dim=3)
+        
         self.bg_net = MLPNet(D=args.netdepth, W=args.netwidth,
                              input_ch=self.bg_embedder_position.out_dim,
                              input_ch_viewdirs=self.bg_embedder_viewdir.out_dim,

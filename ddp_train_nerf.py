@@ -582,6 +582,7 @@ def config_parser():
     parser.add_argument("--i_img", type=int, default=500, help='frequency of tensorboard image logging')
     parser.add_argument("--i_weights", type=int, default=10000, help='frequency of weight ckpt saving')
 
+    parser.add_argument("--embedder", type=str, default="hashgrid", help='embedder of input')
     return parser
 
 
